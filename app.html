@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waveshare Calendar Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --border: #2a2a2a;
+      --accent: #f5c842;
+      --accent2: #ff6b35;
+      --text: #f0f0f0;
+      --muted: #666;
+      --success: #4ecb71;
+      --col-w: 114px;
+      --header-h: 46px;
+      --slot-h: 144px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+    .logo span { color: var(--text); font-weight: 400; }
+    .badge {
+      font-size: 10px;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .topbar-right { display: flex; gap: 10px; align-items: center; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0d0d;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .btn-primary:hover { background: #ffd85c; color: #0d0d0d; border-color: #ffd85c; }
+    .btn-danger { border-color: #ff4444; color: #ff4444; }
+    .btn-danger:hover { background: #ff4444; color: #fff; }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      display: flex;
+      flex: 1;
+      gap: 0;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-section {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── ICON LIBRARY ── */
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .icon-item {
+      aspect-ratio: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .icon-item:hover { border-color: var(--accent); }
+    .icon-item img {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+    }
+    .icon-item .icon-del {
+      display: none;
+      position: absolute;
+      top: 2px; right: 2px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      width: 14px; height: 14px;
+      font-size: 9px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .icon-item:hover .icon-del { display: flex; }
+    .icon-item .icon-name {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.7);
+      font-size: 7px;
+      text-align: center;
+      padding: 2px;
+      color: #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upload-zone {
+      border: 1px dashed var(--border);
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      margin-top: 10px;
+    }
+    .upload-zone:hover { border-color: var(--accent); background: rgba(245,200,66,0.04); }
+    .upload-zone p { font-size: 10px; color: var(--muted); line-height: 1.6; }
+    .upload-zone .icon-up { font-size: 18px; margin-bottom: 4px; }
+
+    /* ── BG REMOVAL OPTIONS ── */
+    .bg-options { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .bg-opt {
+      font-size: 10px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
+    }
+    .bg-opt.active { border-color: var(--accent); color: var(--accent); background: rgba(245,200,66,0.08); }
+
+    /* ── CALENDAR AREA ── */
+    .canvas-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px;
+      overflow: auto;
+      background: var(--bg);
+    }
+    .canvas-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+      align-self: flex-start;
+    }
+
+    /* ── CALENDAR GRID ── */
+    .calendar-wrap {
+      position: relative;
+      border: 4px solid #000;
+      background: white;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, var(--col-w));
+      grid-template-rows: var(--header-h) repeat(3, var(--slot-h));
+      width: calc(7 * var(--col-w));
+      height: calc(var(--header-h) + 3 * var(--slot-h));
+    }
+
+    .cal-header {
+      background: #fff;
+      border-right: 2px solid #000;
+      border-bottom: 1px solid #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #000;
+    }
+    .cal-header:last-child { border-right: none; }
+
+    .cal-slot {
+      border-right: 2px solid #000;
+      border-bottom: 1px solid #000;
+      background: #fff;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+    .cal-slot:last-child { border-right: none; }
+    .cal-slot:nth-child(7n) { border-right: none; }
+    /* last row no bottom border */
+    .cal-slot.last-row { border-bottom: none; }
+
+    .cal-slot.drag-over {
+      background: rgba(245,200,66,0.15) !important;
+      outline: 2px dashed var(--accent);
+      outline-offset: -2px;
+    }
+
+    /* slot content */
+    .slot-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .slot-content.split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .slot-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .slot-icon-wrap img {
+      max-width: 85%;
+      max-height: 85%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .slot-icon-wrap .remove-icon {
+      display: none;
+      position: absolute;
+      top: 4px; right: 4px;
+      background: rgba(255,68,68,0.9);
+      color: white;
+      border: none;
+      width: 16px; height: 16px;
+      font-size: 10px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+      z-index: 10;
+    }
+    .slot-icon-wrap:hover .remove-icon { display: flex; }
+
+    .slot-empty-hint {
+      font-size: 9px;
+      color: #ccc;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    /* split divider line */
+    .split-divider {
+      position: absolute;
+      top: 10%; bottom: 10%;
+      left: 50%;
+      width: 1px;
+      background: #ddd;
+      pointer-events: none;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .right-panel {
+      width: 240px;
+      min-width: 240px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .right-section {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .right-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── SLOT INSPECTOR ── */
+    .inspector-empty {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .inspector-slot {
+      font-size: 11px;
+      line-height: 1.8;
+    }
+    .inspector-slot strong { color: var(--accent); }
+
+
+
+    /* ── EXPORT PANEL ── */
+    .export-info {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    .export-info span { color: var(--text); }
+
+    /* ── PREVIEW SCALE ── */
+    .scale-note {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 10px;
+      text-align: center;
+    }
+
+
+    /* ── EPAPER PREVIEW ── */
+    #btn-preview.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .preview-spinner {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--success);
+      color: #0d0d0d;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 24px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+
+    /* ── HISTORY MODAL ── */
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+      gap: 12px;
+      background: var(--surface2);
+    }
+    .history-info { flex: 1; min-width: 0; }
+    .history-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      outline: none;
+      cursor: text;
+      border-bottom: 1px dashed transparent;
+      transition: border-color 0.15s;
+    }
+    .history-name:hover { border-bottom-color: var(--accent); }
+    .history-name:focus { border-bottom-color: var(--accent); color: var(--accent); }
+    .history-date {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .history-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 28px;
+      width: 360px;
+      max-width: 90vw;
+    }
+    .modal h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+    .modal p { font-size: 11px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+
+    /* ── ICON SEARCH ── */
+    .search-row { display: flex; gap: 6px; margin-bottom: 8px; }
+    .search-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+    .search-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: bold;
+      width: 34px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .search-btn:hover { background: #ffd85c; }
+    .search-status {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+      min-height: 14px;
+    }
+    .search-results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .search-result-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 4px 4px;
+      cursor: grab;
+      position: relative;
+      transition: border-color 0.15s;
+      gap: 3px;
+    }
+    .search-result-item:hover { border-color: var(--accent); }
+    .search-result-item img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+    .search-result-label {
+      font-size: 7px;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+    .search-add-btn {
+      position: absolute;
+      top: 2px; right: 2px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      width: 14px; height: 14px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .search-result-item:hover .search-add-btn { opacity: 1; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    .drag-handle { cursor: grab; }
+    .drag-handle:active { cursor: grabbing; }
+
+    /* ── SLOT LABELS (Google Calendar events) ── */
+    .slot-labels {
+      position: absolute;
+      bottom: 3px;
+      left: 3px;
+      right: 3px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      pointer-events: none;
+    }
+    .slot-label {
+      font-size: 7px;
+      color: #222;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: 'Space Mono', monospace;
+      background: rgba(255,255,255,0.82);
+      padding: 1px 2px;
+    }
+
+    /* ── GOOGLE CAL MODAL ── */
+    .gcal-week-row { margin-bottom: 14px; }
+    .gcal-week-row .sidebar-label { margin-bottom: 6px; }
+    #gcal-status {
+      font-size: 11px;
+      color: var(--accent);
+      min-height: 16px;
+      margin-bottom: 10px;
+      letter-spacing: 0.05em;
+    }
+    .gcal-signout-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">Waveshare <span>Calendar</span></div>
+    <div class="badge">800 × 480 · 7-color</div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" id="btn-gcal">⟳ Google Cal</button>
+    <button class="btn" id="btn-preview">⬡ E-Paper Preview</button>
+    <button class="btn" id="btn-clear">Clear All</button>
+    <button class="btn" id="btn-save-layout">Save Layout</button><button class="btn" id="btn-load">History</button>
+    <button class="btn btn-primary" id="btn-export">↓ Export BMP</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR: Icon Search + Library -->
+  <div class="sidebar">
+
+    <!-- SEARCH -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Icon Search</div>
+      <div class="search-row">
+        <input type="text" id="icon-search" class="search-input" placeholder="pizza, church, bike...">
+        <button id="search-btn" class="search-btn">→</button>
+      </div>
+      <div id="search-status" class="search-status"></div>
+      <div id="search-results" class="search-results-grid"></div>
+    </div>
+
+    <!-- MY LIBRARY -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">My Library</div>
+      <div class="icon-grid" id="icon-grid"></div>
+      <div class="upload-zone" id="upload-zone">
+        <div class="icon-up">⊕</div>
+        <p>Drop images here<br>or click to upload</p>
+        <input type="file" id="file-input" accept="image/*" multiple style="display:none">
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Background Removal</div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:8px;">
+        Auto-remove when uploading:
+      </p>
+      <div class="bg-options">
+        <button class="bg-opt" data-mode="black">Black bg</button>
+        <button class="bg-opt" data-mode="white">White bg</button>
+        <button class="bg-opt active" data-mode="auto">Auto</button>
+        <button class="bg-opt" data-mode="none">None</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">E-Paper Palette</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <div style="width:20px;height:20px;background:#000;border:1px solid #444;" title="Black"></div>
+        <div style="width:20px;height:20px;background:#fff;border:1px solid #444;" title="White"></div>
+        <div style="width:20px;height:20px;background:#00aa00;border:1px solid #444;" title="Green"></div>
+        <div style="width:20px;height:20px;background:#0000ff;border:1px solid #444;" title="Blue"></div>
+        <div style="width:20px;height:20px;background:#ff0000;border:1px solid #444;" title="Red"></div>
+        <div style="width:20px;height:20px;background:#ffff00;border:1px solid #444;" title="Yellow"></div>
+        <div style="width:20px;height:20px;background:#ff8000;border:1px solid #444;" title="Orange"></div>
+      </div>
+      <p style="font-size:9px;color:var(--muted);margin-top:8px;line-height:1.5;">
+        Export snaps all colors to<br>these 7 values only.
+      </p>
+    </div>
+  </div>
+
+  <!-- CALENDAR CANVAS -->
+  <div class="canvas-area">
+    <div class="canvas-label">Preview — drag icons from library into slots</div>
+    <div class="calendar-wrap">
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+    <div class="scale-note">Preview at 1:1 scale (800×480px output)</div>
+    <div id="epaper-preview-wrap" style="display:none;flex-direction:column;align-items:center;gap:10px;">
+      <canvas id="epaper-canvas" width="800" height="480" style="border:2px solid #333;image-rendering:pixelated;"></canvas>
+      <div class="scale-note">E-paper simulation — 7 colors + Floyd-Steinberg dithering</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Inspector + Export -->
+  <div class="right-panel">
+    <div class="right-section">
+      <div class="right-label">Slot Inspector</div>
+      <div id="inspector">
+        <div class="inspector-empty">Click a slot to inspect or configure it.</div>
+      </div>
+    </div>
+
+    <div class="right-section">
+      <div class="right-label">Export Settings</div>
+      <div class="export-info">
+        Size: <span>800 × 480 px</span><br>
+        Format: <span>BMP 24-bit</span><br>
+        Colors: <span>7-color palette</span><br>
+        Dither: <span>Floyd-Steinberg</span><br>
+        File: <span>~1.15 MB</span>
+      </div>
+      <button class="btn btn-primary" id="btn-export2" style="width:100%">↓ Export BMP</button>
+    </div>
+
+    <div class="right-section">
+      <div class="right-label">AI Icon Matching</div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.8;margin-bottom:10px;">
+        Anthropic API key to auto-match icons from event titles after a Google Calendar sync.
+      </p>
+      <input type="password" id="api-key-input" class="search-input"
+        placeholder="sk-ant-..." style="width:100%;margin-bottom:8px;">
+      <div style="display:flex;gap:6px;">
+        <button class="btn" id="btn-save-apikey" style="flex:1;font-size:10px;">Save Key</button>
+        <button class="btn" id="btn-match-icons" style="flex:1;font-size:10px;" disabled>✦ Match Icons</button>
+      </div>
+      <div id="ai-status" style="font-size:10px;color:var(--accent);min-height:14px;margin-top:8px;letter-spacing:0.05em;"></div>
+    </div>
+
+    <div class="right-section">
+      <div class="right-label">SD Card Instructions</div>
+      <p style="font-size:10px;color:var(--muted);line-height:1.8;">
+        1. Copy BMP to <span style="color:var(--text)">/pic/</span> folder<br>
+        2. Eject SD card safely<br>
+        3. Insert into Waveshare<br>
+        4. Power on (USB-C)<br>
+        5. Press button to load<br>
+        6. Wait 15–30 seconds
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SAVE NAME MODAL -->
+<div class="modal-overlay" id="modal-save">
+  <div class="modal">
+    <h3>Save Layout</h3>
+    <p>Give this layout a name. Click the name later to rename it.</p>
+    <input type="text" id="save-name-input" class="search-input" style="width:100%;margin-bottom:16px;">
+    <div class="modal-actions">
+      <button class="btn" id="modal-save-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-confirm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="modal-history">
+  <div class="modal" style="width:480px;">
+    <h3>Layout History</h3>
+    <p>Click a name to rename it. Up to 10 layouts saved.</p>
+    <div id="history-list" style="margin-bottom:16px;max-height:340px;overflow-y:auto;"></div>
+    <div class="modal-actions">
+      <button class="btn" id="modal-history-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLEAR MODAL -->
+<div class="modal-overlay" id="modal-clear">
+  <div class="modal">
+    <h3>Clear Calendar?</h3>
+    <p>This will remove all icons from every slot. Your icon library will be preserved.</p>
+    <div class="modal-actions">
+      <button class="btn" id="modal-cancel">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<!-- GOOGLE CALENDAR MODAL -->
+<div class="modal-overlay" id="modal-gcal">
+  <div class="modal" style="width:400px;">
+    <h3>Google Calendar Sync</h3>
+    <p>Import events from your primary Google Calendar into the weekly slots. Existing icons are kept — only event labels are updated.</p>
+    <div id="gcal-status"></div>
+    <div class="gcal-week-row">
+      <div class="sidebar-label">Week starting</div>
+      <input type="date" id="gcal-week-input" class="search-input" style="width:100%;">
+    </div>
+    <div class="gcal-signout-row" id="gcal-signout-row" style="display:none;">
+      <span id="gcal-account-label"></span>
+      <button class="btn btn-danger" id="gcal-signout" style="font-size:10px;padding:4px 10px;margin-left:auto;">Sign Out</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="gcal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="gcal-sync-btn">Sync from Google Calendar</button>
+    </div>
+  </div>
+</div>
+
+<script src="gcal.js"></script>
+<script src="ai.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 220px;
+      background: #0f0f0f;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h2 {
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #f5c842;
+      margin: 0 0 6px 0;
+    }
+    p {
+      font-size: 11px;
+      color: #888;
+      margin: 0 0 16px 0;
+      line-height: 1.5;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #f5c842;
+      color: #0f0f0f;
+      border: none;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #ffd85c; }
+  </style>
+</head>
+<body>
+  <h2>Waveshare</h2>
+  <p>7-color e-paper<br>calendar builder</p>
+  <button id="open">Open Builder →</button>
+  <script>
+    document.getElementById('open').addEventListener('click', () => {
+      const url = chrome.runtime.getURL('app.html');
+      if (chrome.tabs) {
+        chrome.tabs.create({ url });
+      } else {
+        window.open(url, '_blank');
+      }
+      window.close();
+    });
+  </script>
+</body>
+</html>
