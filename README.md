@@ -1,8 +1,10 @@
+
+
+https://github.com/user-attachments/assets/854cb1e3-19ba-46e3-925a-add32ec25022
+
 # Waveshare Calendar Builder
 
 A Chrome extension for building and exporting weekly visual calendars as BMP images for [Waveshare 7.3" 7-color e-paper displays](https://www.waveshare.com/product/displays/e-paper.htm).
-
-<video src="demo.mp4" controls width="100%"></video>
 
 ---
 
